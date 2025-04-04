@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Networking Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 400px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .landing-page, .chat-container {
+            padding: 15px;
+        }
+
+        .landing-page {
+            display: block;
+        }
+
+        .chat-container {
+            display: none;
+        }
+
+        .landing-header, .chat-header {
+            background: #2a5298;
+            color: white;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .landing-header img, .chat-header img {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .landing-header h2, .chat-header h2 {
+            font-size: 1.2em;
+        }
+
+        .options-list {
+            margin-top: 15px;
+        }
+
+        .option-category {
+            margin-bottom: 20px;
+        }
+
+        .option-category h3 {
+            color: #2a5298;
+            margin-bottom: 10px;
+        }
+
+        .option {
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .option:hover {
+            background: #e0e0e0;
+        }
+
+        .start-chat {
+            padding: 10px 20px;
+            background: #2a5298;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            display: block;
+            margin: 15px auto 0;
+            transition: transform 0.2s ease;
+        }
+
+        .start-chat:hover {
+            transform: translateY(-2px);
+        }
+
+        .chat-messages {
+            padding: 15px;
+            height: 300px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #2a5298 #f0f0f0;
+        }
+
+        .message {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            margin-bottom: 15px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .message img {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .message-content {
+            padding: 10px 14px;
+            border-radius: 12px;
+            max-width: 75%;
+            word-wrap: break-word;
+            font-size: 0.9em;
+        }
+
+        .message-timestamp {
+            font-size: 0.7em;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .user-message {
+            flex-direction: row-reverse;
+        }
+
+        .user-message .message-content {
+            background: #2a5298;
+            color: white;
+        }
+
+        .bot-message .message-content {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .typing-indicator {
+            font-style: italic;
+            color: #666;
+            font-size: 0.8em;
+        }
+
+        .chat-input {
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        #message-input {
+            flex-grow: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 20px;
+            background: #f0f0f0;
+            outline: none;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+        }
+
+        #message-input:focus {
+            background: #fff;
+            box-shadow: 0 0 8px rgba(42, 82, 152, 0.2);
+        }
+
+        button {
+            padding: 8px 20px;
+            background: #2a5298;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            font-size: 0.9em;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        #clear-chat {
+            background: #dc3545;
+        }
+
+        #clear-chat:hover {
+            background: #c82333;
+        }
+
+        #back-button {
+            background: #6c757d; /* Gray color for back button */
+        }
+
+        #back-button:hover {
+            background: #5a6268;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Landing Page -->
+        <div class="landing-page" id="landing-page">
+            <div class="landing-header">
+                <img src="https://imgs.search.brave.com/RlZzK_icuH06rc4Ei1SPgovACQwB8_SJVE9AC-YE0S4/rs:fit:500:0:0:0/g:ce/aHR0cHM6Ly9pbWcu/ZnJlZXBpay5jb20v/cHJlbWl1bS1waG90/by9nbG9iYWwtbmV0/d29yay1jb25uZWN0/aW9uLWNvdmVyaW5n/LWVhcnRoLXdpdGgt/bGluZXMtaW5ub3Zh/dGl2ZS1wZXJjZXB0/aW9uXzMxOTY1LTEx/NTIxLmpwZz9zZW10/PWFpc19oeWJyaWQ" alt="Bot Avatar">
+                <h2>Networking Assistant</h2>
+            </div>
+            <div class="options-list">
+                <div class="option-category">
+                    <h3>Basic Network Troubleshooting</h3>
+                    <div class="option" onclick="startChat('Ping Test')">Ping Test</div>
+                    <div class="option" onclick="startChat('Traceroute')">Traceroute</div>
+                    <div class="option" onclick="startChat('DNS Lookup')">DNS Lookup</div>
+                    <div class="option" onclick="startChat('IP Configuration Check')">IP Configuration Check</div>
+                    <div class="option" onclick="startChat('Internet Connectivity Test')">Internet Connectivity Test</div>
+                </div>
+                <!-- <div class="option-category">
+                    <h3>Network Device Information</h3>
+                    <div class="option" onclick="startChat('Router Details')">Router Details</div>
+                    <div class="option" onclick="startChat('Connected Devices')">Connected Devices</div>
+                    <div class="option" onclick="startChat('MAC Address Lookup')">MAC Address Lookup</div>
+                    <div class="option" onclick="startChat('Port Scanning')">Port Scanning</div>
+                </div> -->
+                <div class="option-category">
+                    <h3>Common Issues</h3>
+                    <div class="option" onclick="startChat('Slow Internet Speed')">Slow Internet Speed</div>
+                    <div class="option" onclick="startChat('Unstable Connection')">Unstable Connection</div>
+                    <div class="option" onclick="startChat('Wi-Fi Not Connecting')">Wi-Fi Not Connecting</div>
+                    <div class="option" onclick="startChat('High Ping Issues')">High Ping Issues</div>
+                </div>
+                <div class="option-category">
+                    <h3>Network Security</h3>
+                    <div class="option" onclick="startChat('Unusual Device Detection')">Unusual Device Detection</div>
+                    <div class="option" onclick="startChat('Open Port Warnings')">Open Port Warnings</div>
+                    <div class="option" onclick="startChat('Firewall Recommendations')">Firewall Recommendations</div>
+                </div>
+            </div>
+            <button class="start-chat" onclick="startChat('')">Start Chat Directly</button>
+        </div>
+
+        <!-- Chat Interface -->
+        <div class="chat-container" id="chat-container">
+            <div class="chat-header">
+                <img src="https://imgs.search.brave.com/RlZzK_icuH06rc4Ei1SPgovACQwB8_SJVE9AC-YE0S4/rs:fit:500:0:0:0/g:ce/aHR0cHM6Ly9pbWcu/ZnJlZXBpay5jb20v/cHJlbWl1bS1waG90/by9nbG9iYWwtbmV0/d29yay1jb25uZWN0/aW9uLWNvdmVyaW5n/LWVhcnRoLXdpdGgt/bGluZXMtaW5ub3Zh/dGl2ZS1wZXJjZXB0/aW9uXzMxOTY1LTEx/NTIxLmpwZz9zZW10/PWFpc19oeWJyaWQ" alt="Bot Avatar">
+                <h2>Networking Assistant</h2>
+            </div>
+            <div class="chat-messages" id="chat-messages">
+                <div class="message bot-message">
+                    <img src="https://imgs.search.brave.com/RlZzK_icuH06rc4Ei1SPgovACQwB8_SJVE9AC-YE0S4/rs:fit:500:0:0:0/g:ce/aHR0cHM6Ly9pbWcu/ZnJlZXBpay5jb20v/cHJlbWl1bS1waG90/by9nbG9iYWwtbmV0/d29yay1jb25uZWN0/aW9uLWNvdmVyaW5n/LWVhcnRoLXdpdGgt/bGluZXMtaW5ub3Zh/dGl2ZS1wZXJjZXB0/aW9uXzMxOTY1LTEx/NTIxLmpwZz9zZW10/PWFpc19oeWJyaWQ" alt="Bot">
+                    <div class="message-content">
+                        Hey there! I'm your Networking Assistant. How can I help you today?
+                        <div class="message-timestamp" data-timestamp></div>
+                    </div>
+                </div>
+            </div>
+            <div class="chat-input">
+                <input type="text" id="message-input" placeholder="Ask about networking...">
+                <button onclick="sendMessage()">Send</button>
+                <button id="clear-chat" onclick="clearChat()">Clear Chat</button>
+                <button id="back-button" onclick="goBack()">Back</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const landingPage = document.getElementById('landing-page');
+        const chatContainer = document.getElementById('chat-container');
+        const chatMessages = document.getElementById('chat-messages');
+        const messageInput = document.getElementById('message-input');
+        const botAvatar = 'https://imgs.search.brave.com/RlZzK_icuH06rc4Ei1SPgovACQwB8_SJVE9AC-YE0S4/rs:fit:500:0:0:0/g:ce/aHR0cHM6Ly9pbWcu/ZnJlZXBpay5jb20v/cHJlbWl1bS1waG90/by9nbG9iYWwtbmV0/d29yay1jb25uZWN0/aW9uLWNvdmVyaW5n/LWVhcnRoLXdpdGgt/bGluZXMtaW5ub3Zh/dGl2ZS1wZXJjZXB0/aW9uXzMxOTY1LTEx/NTIxLmpwZz9zZW10/PWFpc19oeWJyaWQ';
+
+        const responses = {
+            'ping test': 'I can’t run a ping test directly in the browser, but you can open your terminal and type `ping google.com` to check connectivity. Want to know how to interpret the results?',
+            'traceroute': 'Traceroute shows the path packets take to a destination. Use `tracert google.com` (Windows) or `traceroute google.com` (Linux/Mac) in your terminal. Need help with the output?',
+            'dns lookup': 'DNS lookup resolves domain names to IPs. Try `nslookup google.com` in your terminal. Want to learn more about DNS records?',
+            'ip configuration check': 'Check your IP config with `ipconfig` (Windows) or `ifconfig`/`ip addr` (Linux). I can explain what the output means if you share it!',
+            'internet connectivity test': 'To test connectivity, try pinging 8.8.8.8 (Google DNS). If it fails, your internet might be down. Need troubleshooting steps?',
+            'router details': 'Log into your router (usually 192.168.1.1) to see details like firmware, IP, and settings. Want help accessing it?',
+            'connected devices': 'Check connected devices in your router’s admin panel under “DHCP Clients” or similar. Need steps to find this?',
+            'mac address lookup': 'Find your MAC address with `ipconfig /all` (Windows) or `ifconfig` (Linux). Want to know what it’s used for?',
+            'port scanning': 'Port scanning requires tools like `nmap`. I can’t scan directly, but I can explain how to use it safely. Interested?',
+            'slow internet speed': 'Slow speeds? Check your bandwidth with a speed test (e.g., speedtest.net), restart your router, or change DNS to 8.8.8.8. More tips?',
+            'unstable connection': 'Unstable connection? Try rebooting your router, checking cables, or switching Wi-Fi channels. Want detailed steps?',
+            'wi-fi not connecting': 'Wi-Fi issues? Restart your device, forget and reconnect to the network, or reset your router. Need specific help?',
+            'high ping issues': 'High ping? Test with `ping google.com`, avoid heavy network use, or switch to a wired connection. More solutions?',
+            'unusual device detection': 'Check your router’s connected devices list for unknowns. Change your Wi-Fi password if suspicious. Want security tips?',
+            'open port warnings': 'Open ports can be risky. Use a tool like `netstat -an` to check, and consider a firewall. Need setup advice?',
+            'firewall recommendations': 'Use Windows Defender Firewall or third-party options like pfSense. Want basic configuration tips?',
+            'default': 'I can help with troubleshooting, device info, common issues, and security. What do you need assistance with?'
+        };
+
+        function startChat(option) {
+            landingPage.style.display = 'none';
+            chatContainer.style.display = 'block';
+            if (option) {
+                addMessage(option, 'user-message', null);
+                setTimeout(() => {
+                    const botResponse = getBotResponse(option.toLowerCase());
+                    addMessage(botResponse, 'bot-message', botAvatar);
+                }, 1000);
+            }
+        }
+
+        function goBack() {
+            chatContainer.style.display = 'none';
+            landingPage.style.display = 'block';
+            clearChat(); // Reset chat when going back
+        }
+
+        function sendMessage() {
+            const message = messageInput.value.trim().toLowerCase();
+            if (message === '') return;
+
+            addMessage(message, 'user-message', null);
+            messageInput.value = '';
+
+            const typingDiv = addTypingIndicator();
+            setTimeout(() => {
+                chatMessages.removeChild(typingDiv);
+                const botResponse = getBotResponse(message);
+                addMessage(botResponse, 'bot-message', botAvatar);
+            }, 1000);
+        }
+
+        function addMessage(text, className, avatar) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', className);
+            
+            if (className === 'bot-message' && avatar) {
+                const img = document.createElement('img');
+                img.src = avatar;
+                img.alt = 'Bot';
+                messageDiv.appendChild(img);
+            }
+
+            const contentDiv = document.createElement('div');
+            contentDiv.classList.add('message-content');
+            contentDiv.textContent = text;
+
+            const timestampDiv = document.createElement('div');
+            timestampDiv.classList.add('message-timestamp');
+            timestampDiv.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            contentDiv.appendChild(timestampDiv);
+
+            messageDiv.appendChild(contentDiv);
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function addTypingIndicator() {
+            const typingDiv = document.createElement('div');
+            typingDiv.classList.add('message', 'bot-message');
+            const img = document.createElement('img');
+            img.src = botAvatar;
+            img.alt = 'Bot';
+            const contentDiv = document.createElement('div');
+            contentDiv.classList.add('message-content', 'typing-indicator');
+            contentDiv.textContent = 'Typing...';
+            typingDiv.appendChild(img);
+            typingDiv.appendChild(contentDiv);
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            return typingDiv;
+        }
+
+        function getBotResponse(message) {
+            for (const [key, value] of Object.entries(responses)) {
+                if (message.toLowerCase().includes(key)) return value;
+            }
+            return responses['default'];
+        }
+
+        function clearChat() {
+            while (chatMessages.firstChild) {
+                chatMessages.removeChild(chatMessages.firstChild);
+            }
+            addMessage('Hey there! I\'m your Networking Assistant. How can I help you today?', 'bot-message', botAvatar);
+        }
+
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        document.querySelector('.message-timestamp').textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    </script>
+</body>
+</html>
